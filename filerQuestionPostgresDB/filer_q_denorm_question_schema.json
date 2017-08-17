@@ -1,0 +1,87 @@
+[
+  {
+    "name": "question",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "asc_paragraph_ref1",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "sx_paragraph_ref",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "asc_paragraph_ref2",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "ref_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "disclosure",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "taxonomy",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "presentation_parent",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "calculation_parent",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "element_name",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "element_label",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "balance_type",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "period_type",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "data_type",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "unit",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+  {
+    "name": "namespace",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "definition",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]
