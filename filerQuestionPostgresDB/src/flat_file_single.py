@@ -230,9 +230,9 @@ def main(pth, sheets=None):
 # =============================================================================
 # Parameters to pass to main()
 # =============================================================================
-TOPICAL_REVIEW = '0B-ELWhBX_u1AU1pFRHhQZ2M0d2M'
-sheets = [{'id': '1kHmFi-ajAzlIoy8rps_enaLcSh76NwV_fpoR63aNPqY',
-           'name': 'ASC 225 Income Statement'}]
+TOPICAL_REVIEW = '***'
+sheets = [{'id': '***',
+           'name': '***'}]
 path = '/tmp/tst.json'
 
 # =============================================================================
