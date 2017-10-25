@@ -48,7 +48,7 @@ sheets_service = discovery.build('sheets', 'v4', http=http_auth)
 level_one_id = '0Bz6cFFRZYZPtVGxrZW9Fd3h1cm8'
 
 # ID for google sheets in which hyperlinks will be placed
-sheets_id = "1_PJ-DgqkpEGA6tnB9lHlZRC35nB5sVq8LDqz2HJjPJk"
+sheets_id = "***"
 
 # The preface for the hyperlink
 hlink_form = "https://drive.google.com/open?id="
