@@ -286,13 +286,10 @@ def main():
 # =============================================================================
 # Typical Arguments
 # =============================================================================
-# TOPICAL_REVIEW = '0B-ELWhBX_u1AU1pFRHhQZ2M0d2M'
-# SHEETS = [{'id': '1kHmFi-ajAzlIoy8rps_enaLcSh76NwV_fpoR63aNPqY',
-#            'name': 'ASC 225 Income Statement'}]
-# SHEETS = [{'id': '1WoEKevrCPZvM1gnJRK8v26xBxt_nUsn2fkr5WPVyjSw',
-#            'name': 'ASC 470 Debt'}]
-SHEETS = [{'id': '17oHpebKOm5JbBNu3FrziYtvQSXV79SiUivT8uwswaVM',
-           'name': 'ASC 210 Balance Sheet'}]
+TOPICAL_REVIEW = '***'
+sheets = [{'id': '***',
+           'name': '***'}]
+path = '/tmp/tst.json'
 # =============================================================================
 # Run 'er
 # =============================================================================
