@@ -1,26 +1,21 @@
 '''
-Functions for:
+Script for:
 1. Accessing Google Sheets via the python api
 2. Cleaning records without element names, questions, or disclosures
 3. Writing data to newline delimited json records
 '''
 
-import sys
+import argparse
 import httplib2
 import os
 import numpy as np
 import pandas as pd
+from time import time
 
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
-
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
 
 # =============================================================================
 # Credential Parameters
@@ -110,10 +105,10 @@ def records_df(service, identifier, wrksht):
     :return: valueRange object
     """
     range_names = [
-        wrksht+"!A1:D",
-        wrksht+"!K1:K",
-        wrksht+"!M1:M",
-        wrksht+"!P1:X"
+        wrksht + "!A1:D",
+        wrksht + "!K1:K",
+        wrksht + "!M1:M",
+        wrksht + "!P1:X"
     ]
     values = service.spreadsheets().values().batchGet(
         spreadsheetId=identifier, ranges=range_names,
@@ -185,59 +180,122 @@ def combine_df(service, items, wrksht, taxonomy):
     full = pd.concat(dframes, ignore_index=True)
     # arrange in the correct format
     full = full[['disclosure', 'taxonomy', 'topic', 'asc_paragraph_ref1',
-                    'sx_paragraph_ref', 'asc_paragraph_ref2', 'ref_id',
-                    'question', 'presentation_parent', 'calculation_parent',
-                    'element_name', 'element_label', 'balance_type',
-                    'period_type', 'data_type', 'namespace', 'definition',
-                    'unit']]
+                 'sx_paragraph_ref', 'asc_paragraph_ref2', 'ref_id',
+                 'question', 'presentation_parent', 'calculation_parent',
+                 'element_name', 'element_label', 'balance_type',
+                 'period_type', 'data_type', 'namespace', 'definition',
+                 'unit']]
     return full
 
 
-def to_json(df, pth):
+def write_to_json(df, pth, timestamp=False):
     """
     Converts a pandas df to newline delimited json
 
     :param df: The pandas df
     :param pth: The path to write to
+    :param timestamp: Should a timestamp be added to the json?
     :return: writes to json, newline delimited
     """
     f = open(pth, 'w')
-    for row in df.iterrows():
-        row[1].dropna().str.strip().to_json(f)
-        f.write('\n')
+    if timestamp:
+        for row in df.iterrows():
+            srs = pd.Series(row[1].dropna().str.strip())
+            s = srs.append(pd.Series([str(time())], index=['timestamp']))
+            s.to_json(f)
+            f.write('\n')
+    else:
+        for row in df.iterrows():
+            row[1].dropna().str.strip().to_json(f)
+            f.write('\n')
     f.close()
 
 
-def main(pth, sheets=None):
+# def main(pth, sheets=None):
+#     """
+#     Accesses google sheets, finds relevant sheets if necessary, gets data,
+#     cleans data, combines multiple sheets and exports to json.
+#
+#     :param sheets: The google sheets to use, or leave none to get all
+#     :param pth: the path to write json to
+#     :return:
+#     """
+#     http_auth = authorize_access()
+#     drive_service = discovery.build('drive', 'v3', http=http_auth)
+#     sheets_service = discovery.build('sheets', 'v4', http=http_auth)
+#     if sheets is None:
+#         sheets = get_files_recursive(drive_service, TOPICAL_REVIEW)
+#     full = combine_df(sheets_service, sheets,
+#                       'Disclosure Requirements', '2017_review')
+#     to_json(full, pth)
+
+
+def main():
     """
     Accesses google sheets, finds relevant sheets if necessary, gets data,
     cleans data, combines multiple sheets and exports to json.
 
-    :param sheets: The google sheets to use, or leave none to get all
-    :param pth: the path to write json to
     :return:
     """
+    parser = argparse.ArgumentParser(
+        description='Convert Topical Review Google Sheets into json files')
+    parser.add_argument('path',
+                        help='output path of the file')
+    parser.add_argument('-w', '--worksheet',
+                        help='name of worksheet, '
+                             'defaults to \'Disclosure Requirements\'',
+                        default='Disclosure Requirements')
+    parser.add_argument('-t', '--taxonomy',
+                        help='name of taxonomy, '
+                             'defaults to \'2017_review\'',
+                        default='2017_review')
+    parser.add_argument('-ts', '--timestamp',
+                        help='should timestamp be added, '
+                             'defaults to True',
+                        default=True)
+    group = parser.add_argument_group(title='group')
+    parser.add_argument('-f', '--folderid',
+                        help='gsheets id of the folder containing '
+                             'multiple gsheets')
+    group.add_argument('-i', '--sheetid',
+                       help='id of the gsheet to process')
+    group.add_argument('-n', '--sheetname',
+                       help='name of the gsheet to process')
+    args = parser.parse_args()
+
+    print("...Authorizing Google Sheets...")
     http_auth = authorize_access()
     drive_service = discovery.build('drive', 'v3', http=http_auth)
     sheets_service = discovery.build('sheets', 'v4', http=http_auth)
-    if sheets is None:
-        sheets = get_files_recursive(drive_service, TOPICAL_REVIEW)
-    full = combine_df(sheets_service, sheets,
-                      'Disclosure Requirements', '2017_review')
-    to_json(full, pth)
+    if args.folderid:
+        print("...Finding all relevant files...")
+        sheets = get_files_recursive(drive_service, args.folderid)
+    elif args.sheetid and args.sheetname:
+        sht = {'id': args.sheetid, 'name': args.sheetname}
+        sheets = list()
+        sheets.append(sht)
+    else:
+        raise ValueError("Must specify folder_id or both sheet name and id")
+    print("...Converting sheets to dataframe...")
+    full = combine_df(sheets_service, sheets, args.worksheet, args.taxonomy)
+    print("...Writing to json...")
+    write_to_json(full, args.path, timestamp=args.timestamp)
+    print("...DONE")
 
 
 # =============================================================================
-# Parameters to pass to main()
+# Typical Arguments
 # =============================================================================
-TOPICAL_REVIEW = '0B-ELWhBX_u1AU1pFRHhQZ2M0d2M'
-sheets = [{'id': '1kHmFi-ajAzlIoy8rps_enaLcSh76NwV_fpoR63aNPqY',
-           'name': 'ASC 225 Income Statement'}]
-path = '/tmp/tst.json'
-
+# TOPICAL_REVIEW = '0B-ELWhBX_u1AU1pFRHhQZ2M0d2M'
+# SHEETS = [{'id': '1kHmFi-ajAzlIoy8rps_enaLcSh76NwV_fpoR63aNPqY',
+#            'name': 'ASC 225 Income Statement'}]
+# SHEETS = [{'id': '1WoEKevrCPZvM1gnJRK8v26xBxt_nUsn2fkr5WPVyjSw',
+#            'name': 'ASC 470 Debt'}]
+SHEETS = [{'id': '17oHpebKOm5JbBNu3FrziYtvQSXV79SiUivT8uwswaVM',
+           'name': 'ASC 210 Balance Sheet'}]
 # =============================================================================
 # Run 'er
 # =============================================================================
 
 if __name__ == '__main__':
-    main(path, sheets=sheets)
+    main()
