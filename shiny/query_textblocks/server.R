@@ -1,21 +1,21 @@
 library(shiny)
 library(DT)
 library(RPostgreSQL)
-library(pool)
+# library(pool)
 
 cred <- Sys.getenv(c('DB_NAME', 'DB_HOST', 'DB_PORT', 'DB_USER', 'DB_PASSWORD'))
 
-pool <- dbPool(
-  drv = RPostgreSQL::PostgreSQL(),
-  dbname = cred[1], 
-  host = cred[2],
-  port = cred[3],
-  user = cred[4],
-  password = cred[5],
-  maxSize = 7, # max size for DBI is 16
-  idleTimeout = 360000,
-  validateQuery = 'SELECT 1'
-)
+# pool <- dbPool(
+#   drv = RPostgreSQL::PostgreSQL(),
+#   dbname = cred[1], 
+#   host = cred[2],
+#   port = cred[3],
+#   user = cred[4],
+#   password = cred[5],
+#   maxSize = 7, # max size for DBI is 16
+#   idleTimeout = 360000,
+#   validateQuery = 'SELECT 1'
+# )
 
 shinyServer(function(input, output, session) {
   
@@ -88,8 +88,17 @@ shinyServer(function(input, output, session) {
     
     updateTabsetPanel(session, "inTabset", selected = 'Data')
     
+    # connection
+    conn <- dbConnect(PostgreSQL(),   
+                      dbname = cred[1], 
+                      host = cred[2],
+                      port = cred[3],
+                      user = cred[4],
+                      password = cred[5])
+    on.exit(dbDisconnect(conn))
+    
     # execute query
-    rv$db_return <- dbGetQuery(pool, sql)
+    rv$db_return <- dbGetQuery(conn, sql)
     
     # log
     cat(paste('\nThe query returned', nrow(rv$db_return),
@@ -98,10 +107,10 @@ shinyServer(function(input, output, session) {
     cat(paste('\nActive Connections:', length(active_connections), "\n"))
     
     # handle too many connections
-    if (length(active_connections) > 15) {
-      lapply(active_connections[1:4], dbDisconnect)
-      cat("Connections deleted")
-    }
+    # if (length(active_connections) > 15) {
+    #   lapply(active_connections[1:4], dbDisconnect)
+    #   cat("Connections deleted")
+    # }
     
   })
 
@@ -109,6 +118,10 @@ shinyServer(function(input, output, session) {
   # Table Output
   # ====
   output$results <- renderDataTable({
+    validate(
+      need(!is.null(rv$db_return), 
+           message = "No textblock to show, execute a query first")
+    )
     if (nrow(rv$db_return)==0) {
       showNotification('The query executed successfully, but no text blocks 
                        containing the keyword(s) were found.', 
@@ -163,6 +176,9 @@ shinyServer(function(input, output, session) {
 # TODO: Why does pool not close connections properly?
 # TODO: Add download button
 # TODO: Style Datatable
+# TODO: Reset page https://stackoverflow.com/questions/25062422/restart-shiny-session
+# TODO: limit # of rows
+# TODO: Better logs
 
 # validate(
 #   need(try(rv$db_return <- dbGetQuery(pool, sql)),
